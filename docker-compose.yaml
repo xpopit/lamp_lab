@@ -1,0 +1,67 @@
+version: "3.8"
+services:
+  webserver:
+    # build:
+    #   context: .
+    # container_name: "lamp-php54"
+    image: xpop:php54
+    restart: "always"
+    ports:
+      - "10088:80"
+      # - "443:443"
+    links:
+      - database
+    volumes:
+      - webserver:/var/www/html:rr
+      # - ./ssl:/etc/apache2/ssl/
+      # - ./vhosts:/etc/apache2/sites-enabled
+      # - ./logs/apache2:/var/log/apache2
+      # - ./logs/xdebug:/var/log/xdebug
+    environment:
+      APACHE_DOCUMENT_ROOT: /var/www/html-/var/www/html
+      PMA_PORT: 8080
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+      MYSQL_DATABASE: docker
+      HOST_MACHINE_MYSQL_PORT: 3306
+      XDEBUG_CONFIG: "client_host=host.docker.internal remote_port=9003"
+    # extra_hosts:
+    #   - "host.docker.internal:host-gateway"
+
+  database:
+    # build:
+    #   context: "Dockerfile-mysql56"
+    container_name: database
+    image: "mysql:5.6"
+    restart: "always"
+    ports:
+      - "13306:3306"
+    volumes:
+      - database:/var/lib/mysql
+      - ./logs/mysql:/var/log/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: docker
+      MYSQL_USER: docker
+      MYSQL_PASSWORD: docker
+  ftp:
+    image: delfer/alpine-ftp-server
+    ports:
+      - "1021:21"
+      - "21000-21010:21000-21010"
+    environment:
+      - USERS="one|1234|/home/user/dir|10000"
+      - ADDRESS=ftp.site.domain
+    volumes:
+      - webserver:/home/user/dir
+      # docker run -d \
+      #     -p 21:21 \
+      #     -p 21000-21010:21000-21010 \
+      #     -e USERS="one|1234" \
+      #     -e ADDRESS=ftp.site.domain \
+      #     delfer/alpine-ftp-server
+
+volumes:
+  webserver:
+  database:
